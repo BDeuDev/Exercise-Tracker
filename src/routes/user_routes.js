@@ -1,28 +1,35 @@
 const express = require('express');
 const router = express.Router();
 const { createUser, getAllUsers, addExercise } = require('../services/user_service')
-const User = require('../models/user')
+const User = require('../models/user');
+
 router.post('/users', async (req, res) => {
     const { username } = req.body;
 
     try {
         await createUser(username)
-            .then(result => res.status(200).json({ result }))
+            .then((result) => {
+                res.status(200).json({ username: result.username, _id: result._id, })
+            })
             .catch(err => res.status(404).json({ error: err }))
 
     } catch (error) {
         res.status(400).json({ error: 'Failed to create new user' });
     }
 });
+
 router.get('/users', async (req, res) => {
     try {
         await getAllUsers()
-            .then(result => res.status(200).json({ result }))
+            .then((result) => {
+                res.status(200).json( result )
+            })
             .catch(err => res.status(404).json({ error: err }))
     } catch (error) {
         res.status(400).json({ error: 'Failed to retrieve users' });
     }
 });
+
 router.post('/users/:_id/exercises', async (req, res) => {
     const { description, duration, date } = req.body;
     const userId = req.params._id;
@@ -45,6 +52,7 @@ router.post('/users/:_id/exercises', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
 router.get('/users/:_id/logs', async (req, res) => {
     const { _id } = req.params;
     const { from, to, limit } = req.query;
