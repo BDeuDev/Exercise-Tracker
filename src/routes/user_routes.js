@@ -56,41 +56,43 @@ router.post('/users/:_id/exercises', async (req, res) => {
 router.get('/users/:_id/logs', async (req, res) => {
     const { _id } = req.params;
     const { from, to, limit } = req.query;
-  
+
     try {
-      let query = { _id };
-  
-      if (from || to) {
-        query.date = {};
-        if (from) query.date.$gte = new Date(from);
-        if (to) query.date.$lte = new Date(to);
-      }
-  
-      let user = await User.findOne(query);
-  
-      if (!user) {
-        return res.status(404).json({ error: 'User not found' });
-      }
-  
-      let log = user.log;
-  
-      if (limit) {
-        log = log.slice(0, parseInt(limit));
-      }
-  
-      res.status(200).json({
-        _id: user._id,
-        username: user.username,
-        count: log.length,
-        log: log.map((exercise) => ({
-          description: exercise.description,
-          duration: exercise.duration,
-          date: new Date(exercise.date).toDateString()
-        }))
-      });
+
+        const user = await User.findById(_id);
+
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        let log = user.log;
+
+        if (from) {
+            const fromDate = new Date(from);
+            log = log.filter(exercise => new Date(exercise.date) >= fromDate);
+        }
+
+        if (to) {
+            const toDate = new Date(to);
+            log = log.filter(exercise => new Date(exercise.date) <= toDate);
+        }
+
+        if (limit) {
+            log = log.slice(0, parseInt(limit));
+        }
+
+        res.status(200).json({
+            _id: user._id,
+            username: user.username,
+            count: log.length,
+            log: log.map(exercise => ({
+                description: exercise.description,
+                duration: exercise.duration,
+                date: new Date(exercise.date).toDateString()
+            }))
+        });
     } catch (error) {
-      res.status(400).json({ error: 'Failed to retrieve exercise log' });
+        res.status(400).json({ error: 'Failed to retrieve exercise log' });
     }
 });
-
 module.exports = router
